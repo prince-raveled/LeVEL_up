@@ -58,7 +58,11 @@ const [complimentText, setComplimentText] = useState("");
   const [skills, setSkills] = useState([]);
   const [lookingFor, setLookingFor] = useState("");
   const [availability, setAvailability] = useState("hackathon");
-useEffect(() => {
+const [github, setGithub] = useState("");
+const [linkedin, setLinkedin] = useState("");
+const [codingProfile, setCodingProfile] = useState("");
+
+  useEffect(() => {
   setSkills([]);        // clear previous skills
   setCinematic(null);  // stop any running effect
 }, [availability]);
@@ -107,6 +111,10 @@ const triggerCompliment = (enteredName) => {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+if (!github || !linkedin) {
+  alert("GitHub and LinkedIn profiles are required");
+  return;
+}
 
   try {
     const res = await api.post("/users/register", {
@@ -116,7 +124,12 @@ const handleSubmit = async (e) => {
       lookingFor: lookingFor
         .split(",")
         .map((s) => s.trim()),
-      portfolio: {}, // you can extend later
+     portfolio: {
+  github,
+  linkedin,
+  codingProfile: codingProfile || undefined,
+},
+// you can extend later
     });
 
     // Save logged-in user (temporary auth)
@@ -214,6 +227,26 @@ return (
             placeholder="Enter your email"
             onChange={setEmail}
           />
+<TextInput
+  label="GitHub Profile *"
+  value={github}
+  placeholder="https://github.com/username"
+  onChange={setGithub}
+/>
+
+<TextInput
+  label="LinkedIn Profile *"
+  value={linkedin}
+  placeholder="https://linkedin.com/in/username"
+  onChange={setLinkedin}
+/>
+
+<TextInput
+  label="Coding Profile (optional)"
+  value={codingProfile}
+  placeholder="LeetCode / CodeChef / CodingNinjas link"
+  onChange={setCodingProfile}
+/>
 
          <SkillSelector
   skills={availableSkills}

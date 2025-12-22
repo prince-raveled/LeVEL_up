@@ -9,7 +9,6 @@ function Matches() {
     const fetchMatches = async () => {
       try {
         const res = await api.get(`/match/${user._id}`);
-        console.log("Matches response:", res.data);
         setMatches(res.data);
       } catch (err) {
         console.error("Error fetching matches", err);
@@ -22,62 +21,142 @@ function Matches() {
   }, [user]);
 
   if (!user) {
-    return <p>Please register first.</p>;
-  }
-
-  if (matches.length === 0) {
     return (
-      <div>
-        <h2>Your Matches</h2>
-        <p>People who complement your skills</p>
-        <p>No teammates found yet 🚀</p>
+      <div style={{ padding: "40px", color: "#e5e7eb" }}>
+        <p>Please register first.</p>
       </div>
     );
   }
 
   return (
-    <div>
-      <h2>Your Matches</h2>
-      <p>People who complement your skills</p>
+    <div
+      style={{
+        minHeight: "100vh",
+        padding: "40px",
+        background: "linear-gradient(180deg, #020617, #000)",
+        color: "#e5e7eb",
+      }}
+    >
+      <h2 style={{ color: "#e0e7ff", marginBottom: "6px" }}>
+        Your Matches
+      </h2>
+      <p style={{ opacity: 0.8 }}>
+        People who complement your skills
+      </p>
 
-      {matches.map((m) => (
+      {matches.length === 0 ? (
         <div
-          key={m._id}
           style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginTop: "10px",
+            marginTop: "60px",
+            textAlign: "center",
+            opacity: 0.85,
           }}
         >
-          <h3>{m.name}</h3>
-          <p>Skills: {m.skills.join(", ")}</p>
-
-          {m.portfolio?.github && (
-            <a href={m.portfolio.github} target="_blank" rel="noreferrer">
-              GitHub
-            </a>
-          )}
-          {" "}
-          {m.portfolio?.linkedin && (
-            <a href={m.portfolio.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn
-            </a>
-          )}
-
-          <br /><br />
-          <button
-            onClick={async () => {
-              await api.post("/requests", {
-                fromUser: user._id,
-                toUser: m._id,
-              });
-              alert("Team request sent!");
-            }}
-          >
-            Team up
-          </button>
+          <h3>No teammates found yet 🚀</h3>
+          <p style={{ marginTop: "10px" }}>
+            New users will appear here automatically.
+          </p>
         </div>
-      ))}
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "20px",
+            marginTop: "30px",
+          }}
+        >
+          {matches.map((m) => (
+            <div
+              key={m._id}
+              style={{
+                background: "rgba(15, 23, 42, 0.65)",
+                backdropFilter: "blur(18px)",
+                borderRadius: "18px",
+                padding: "20px",
+                border: "1px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 0 25px rgba(99,102,241,0.15)",
+              }}
+            >
+              {/* Name */}
+              <h3 style={{ color: "#e0e7ff", marginBottom: "6px" }}>
+                {m.name}
+              </h3>
+
+              {/* Skills */}
+              <p style={{ fontSize: "14px", opacity: 0.9 }}>
+                <strong>Skills:</strong> {m.skills.join(", ")}
+              </p>
+
+              {/* Profiles */}
+              <div style={{ marginTop: "10px", fontSize: "14px" }}>
+                <strong>Profiles:</strong>
+                <div style={{ marginTop: "6px" }}>
+                  {m.portfolio?.github && (
+                    <a
+                      href={m.portfolio.github}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#60a5fa" }}
+                    >
+                      GitHub
+                    </a>
+                  )}
+
+                  {" | "}
+                  {m.portfolio?.linkedin && (
+                    <a
+                      href={m.portfolio.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#60a5fa" }}
+                    >
+                      LinkedIn
+                    </a>
+                  )}
+
+                  {m.portfolio?.codingProfile && (
+                    <>
+                      {" | "}
+                      <a
+                        href={m.portfolio.codingProfile}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: "#34d399" }}
+                      >
+                        Coding
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Action */}
+              <button
+                onClick={async () => {
+                  await api.post("/requests", {
+                    fromUser: user._id,
+                    toUser: m._id,
+                  });
+                  alert("Team request sent!");
+                }}
+                style={{
+                  marginTop: "16px",
+                  width: "100%",
+                  padding: "10px",
+                  background: "#4f46e5",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                }}
+              >
+                Team Up
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
