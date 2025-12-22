@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
+import { MdCode } from "react-icons/md";
+
 import api from "../api";
 
 function Matches() {
@@ -89,47 +92,63 @@ function Matches() {
               </p>
 
               {/* Profiles */}
-              <div style={{ marginTop: "10px", fontSize: "14px" }}>
-                <strong>Profiles:</strong>
-                <div style={{ marginTop: "6px" }}>
-                  {m.portfolio?.github && (
-                    <a
-                      href={m.portfolio.github}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#60a5fa" }}
-                    >
-                      GitHub
-                    </a>
-                  )}
+              <div
+  style={{
+    display: "flex",
+    gap: "16px",
+    marginTop: "14px",
+    alignItems: "center",
+  }}
+>
+  {m.portfolio?.github && (
+    <a
+      href={m.portfolio.github}
+      target="_blank"
+      rel="noreferrer"
+      title="GitHub"
+      style={{
+        color: "#e5e7eb",
+        fontSize: "22px",
+        transition: "transform 0.2s ease",
+      }}
+    >
+      <FaGithub />
+    </a>
+  )}
 
-                  {" | "}
-                  {m.portfolio?.linkedin && (
-                    <a
-                      href={m.portfolio.linkedin}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ color: "#60a5fa" }}
-                    >
-                      LinkedIn
-                    </a>
-                  )}
+  {m.portfolio?.linkedin && (
+    <a
+      href={m.portfolio.linkedin}
+      target="_blank"
+      rel="noreferrer"
+      title="LinkedIn"
+      style={{
+        color: "#0a66c2",
+        fontSize: "22px",
+        transition: "transform 0.2s ease",
+      }}
+    >
+      <FaLinkedin />
+    </a>
+  )}
 
-                  {m.portfolio?.codingProfile && (
-                    <>
-                      {" | "}
-                      <a
-                        href={m.portfolio.codingProfile}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: "#34d399" }}
-                      >
-                        Coding
-                      </a>
-                    </>
-                  )}
-                </div>
-              </div>
+  {m.portfolio?.codingProfile && (
+    <a
+      href={m.portfolio.codingProfile}
+      target="_blank"
+      rel="noreferrer"
+      title="Coding Profile"
+      style={{
+        color: "#34d399",
+        fontSize: "22px",
+        transition: "transform 0.2s ease",
+      }}
+    >
+      <MdCode />
+    </a>
+  )}
+</div>
+
 
               {/* Action */}
               <button

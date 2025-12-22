@@ -57,7 +57,8 @@ const [complimentText, setComplimentText] = useState("");
   const [email, setEmail] = useState("");
   const [skills, setSkills] = useState([]);
   const [lookingFor, setLookingFor] = useState("");
-  const [availability, setAvailability] = useState("hackathon");
+ const [availability, setAvailability] = useState("");
+
 const [github, setGithub] = useState("");
 const [linkedin, setLinkedin] = useState("");
 const [codingProfile, setCodingProfile] = useState("");
@@ -89,11 +90,15 @@ const toggleSkill = (skill) => {
 
 const compliments = [
   "Great to have you here,",
-  "Nice name!",
-  "You're going to build something awesome,",
-  "That’s a strong name!",
-  "Welcome aboard,"
+  "Good to see you,",
+  "Welcome — let’s build something real,",
+  "This feels like a strong start,",
+  "You’re in the right place,",
+  "Nice choice joining LEVEL_UP,",
+  "Looks like you’re ready to collaborate,",
+  "Let’s find the right team for you,",
 ];
+
 
 const triggerCompliment = (enteredName) => {
   if (!enteredName.trim()) return;
@@ -136,7 +141,8 @@ if (!github || !linkedin) {
     localStorage.setItem("user", JSON.stringify(res.data));
 
     // Redirect to matches page
-    navigate("/matches");
+  navigate("/intro");
+
   } catch (err) {
     alert(err.response?.data?.message || "Registration failed");
   }
@@ -247,12 +253,23 @@ return (
   placeholder="LeetCode / CodeChef / CodingNinjas link"
   onChange={setCodingProfile}
 />
-
-         <SkillSelector
-  skills={availableSkills}
-  selectedSkills={skills}
-  onToggle={toggleSkill}
+<AvailabilitySelect
+  value={availability}
+  onChange={setAvailability}
 />
+
+{availability && (
+  <>
+    <h4 style={{ marginTop: "16px" }}>Your skills</h4>
+
+    <SkillSelector
+      skills={availableSkills}
+      selectedSkills={skills}
+      onToggle={toggleSkill}
+    />
+  </>
+)}
+
 
 
           <div style={{ marginTop: "10px" }}>
@@ -270,10 +287,6 @@ return (
             />
           </div>
 
-          <AvailabilitySelect
-            value={availability}
-            onChange={setAvailability}
-          />
 
           <button
             type="submit"
