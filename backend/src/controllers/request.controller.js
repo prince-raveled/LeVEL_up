@@ -4,6 +4,7 @@ const TeamRequest = require("../models/TeamRequest");
 const User = require("../models/user");
 const sendEmail = require("../utils/sendEmail");
 const { v4: uuidv4 } = require("uuid");
+const Conversation = require("../models/Conversation");
 
 // @desc    Send team-up request (with email notification)
 // @route   POST /api/requests
@@ -76,20 +77,75 @@ const getIncomingRequests = async (req, res) => {
 
 // @desc    Update request status
 // @route   PATCH /api/requests/:id
+// @desc    Update request status (accept / reject)
+// @route   PATCH /api/requests/:id
 const updateRequestStatus = async (req, res) => {
   try {
     const { status } = req.body;
+
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
 
     const request = await TeamRequest.findById(req.params.id);
     if (!request) {
       return res.status(404).json({ message: "Request not found" });
     }
 
+    // prevent double handling
+    if (request.status !== "pending") {
+      return res
+        .status(400)
+        .json({ message: "Request already handled" });
+    }
+
     request.status = status;
     await request.save();
 
+    // 🟢 CREATE CONVERSATION ONLY ON ACCEPT
+    if (status === "accepted") {
+      const existingConversation = await Conversation.findOne({
+        request: request._id,
+      });
+
+      if (!existingConversation) {
+        await Conversation.create({
+          participants: [request.fromUser, request.toUser],
+          request: request._id,
+        });
+      }
+    }
+
+    res.json({ message: `Request ${status}` });
+  } catch (error) {
+    console.error("Update request error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// @desc    Get request by token (from email link)
+// @route   GET /api/requests/token/:token
+const getRequestByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const request = await TeamRequest.findOne({ token })
+      .populate("fromUser", "name skills portfolio")
+      .populate("toUser", "email name");
+
+    if (!request) {
+      return res.status(404).json({ message: "Invalid or expired request" });
+    }
+
+    if (request.status !== "pending") {
+      return res
+        .status(400)
+        .json({ message: "Request already handled" });
+    }
+
     res.json(request);
   } catch (error) {
+    console.error("Fetch request error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -98,4 +154,6 @@ module.exports = {
   sendRequest,
   getIncomingRequests,
   updateRequestStatus,
+  getRequestByToken, // 👈 ADD THIS
 };
+
