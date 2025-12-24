@@ -15,11 +15,21 @@ const getMatches = async (req, res) => {
       });
     }
 
-    // Find users whose skills match currentUser's lookingFor
-    const matches = await User.find({
-      _id: { $ne: userId },
-      skills: { $in: currentUser.lookingFor },
-    }).select("-__v");
+    // Prepare lookingFor array (robust to string/empty values)
+    const lookingFor = Array.isArray(currentUser.lookingFor)
+      ? currentUser.lookingFor.filter(Boolean)
+      : currentUser.lookingFor
+      ? [currentUser.lookingFor]
+      : [];
+
+    // Build query (previous behavior): match others; if lookingFor set, require skills match.
+    const baseQuery = { _id: { $ne: userId } };
+
+    if (lookingFor.length) {
+      baseQuery.skills = { $in: lookingFor };
+    }
+
+    const matches = await User.find(baseQuery).select("-__v");
 
     res.json(matches);
   } catch (error) {

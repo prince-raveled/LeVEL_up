@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import MatchIntro from "./pages/MatchIntro";
 import Matches from "./pages/Matches";
 import RequestPage from "./pages/RequestPage";
+import Chat from "./pages/Chat";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/intro" element={<MatchIntro />} />
         <Route path="/matches" element={<Matches />} />
+        <Route path="/chat/:conversationId" element={<Chat />} />
         <Route path="/request/:token" element={<RequestPage />} />
 
       </Routes>

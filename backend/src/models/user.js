@@ -28,6 +28,8 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    
+
     // Portfolio / profile links
     portfolio: {
       github: { type: String },

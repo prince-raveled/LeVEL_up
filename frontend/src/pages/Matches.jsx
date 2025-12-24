@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaGithub, FaLinkedin, FaCode, FaFire, FaTerminal } from "react-icons/fa";
+import { FaGithub, FaLinkedin, FaCode, FaFire, FaTerminal, FaCommentDots } from "react-icons/fa";
 import { MdCheckCircle, MdChevronRight } from "react-icons/md";
 import api from "../api";
 const getAvailabilityGreeting = (availability) => {
@@ -22,9 +22,10 @@ const getAvailabilityGreeting = (availability) => {
 function Matches() {
   const [sentRequests, setSentRequests] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [conversationsByUser, setConversationsByUser] = useState({});
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem("user"));
-console.log("USER FROM LOCALSTORAGE:", user);
+// debug log removed for performance
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -38,6 +39,26 @@ console.log("USER FROM LOCALSTORAGE:", user);
       }
     };
     if (user?._id) fetchMatches();
+  }, [user]);
+
+  // fetch conversations for user to know which matches have chat
+  useEffect(() => {
+    const fetchConversations = async () => {
+      if (!user?._id) return;
+      try {
+        const res = await api.get(`/chat/conversations/${user._id}`);
+        const map = {};
+        res.data.forEach((conv) => {
+          const other = conv.participants.find((p) => p._id !== user._id);
+          if (other) map[other._id] = conv._id;
+        });
+        setConversationsByUser(map);
+      } catch (err) {
+        console.error("Error fetching conversations", err);
+      }
+    };
+
+    fetchConversations();
   }, [user]);
 
  if (!user) {
@@ -79,10 +100,18 @@ console.log("USER FROM LOCALSTORAGE:", user);
 
   return (
     <div style={containerStyle}>
-      {/* Background Glow */}
-      <div style={glowEffectStyle} />
+      <div style={topGradient} />
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={headerCard}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={profilePill}>{(user?.name || "U").split(" ").map(n=>n[0]).slice(0,2).join("")}</div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#f8fafc" }}>{user?.name || "You"}</div>
+              <div style={{ fontSize: 13, color: "#9ca3af" }}>{user?.availability || "Looking for collaborators"}</div>
+            </div>
+          </div>
+        </div>
 <header
   style={{
     marginBottom: "50px",
@@ -93,7 +122,7 @@ console.log("USER FROM LOCALSTORAGE:", user);
 >
   <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
     <div style={statusBadge}>
-      <span style={pulseDot}></span> LIVE MATCHMAKING
+      <span style={pulseDot}></span> IDEA · CODE · PARTICIPATE
     </div>
 
     <h1 style={titleStyle}>
@@ -129,7 +158,7 @@ console.log("USER FROM LOCALSTORAGE:", user);
 
 
         {loading ? (
-          <div style={{ color: "#6366f1", fontWeight: "600" }}>Fetching data...</div>
+          <div style={{ color: "#9ca3af", fontWeight: "600" }}>Fetching data...</div>
         ) : (
           <div style={gridStyle}>
             <AnimatePresence>
@@ -139,16 +168,18 @@ console.log("USER FROM LOCALSTORAGE:", user);
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  whileHover={{ borderColor: "rgba(99, 102, 241, 0.5)" }}
+                  whileHover={{ borderColor: "rgba(148,163,184,0.18)" }}
                   style={cardStyle}
                 >
-                  <div style={cardHeader}>
-                    <div>
-                      <h3 style={nameStyle}>{m.name}</h3>
-                      <div style={matchScore}>
-                        <FaFire /> {85 + Math.floor(Math.random() * 14)}% Compatibility
+                  <div style={cardHeaderAlt}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                      <div style={avatarCircle}>{m.name.split(" ").map(n=>n[0]).slice(0,2).join("")}</div>
+                      <div>
+                        <h3 style={nameStyle}>{m.name}</h3>
+                        <div style={matchScore}><FaFire /> {85 + Math.floor(Math.random() * 14)}% Compatibility</div>
                       </div>
                     </div>
+                    <div style={{ fontSize: 12, color: "#94a3b8" }}>{m.portfolio?.github ? "Open to collaboration" : "Available"}</div>
                   </div>
 
                   {/* Skills Section - High Contrast */}
@@ -170,16 +201,22 @@ console.log("USER FROM LOCALSTORAGE:", user);
                       {m.portfolio?.codingProfile && <SocialIcon icon={<FaCode />} url={m.portfolio.codingProfile} color="#10b981" />}
                     </div>
 
-                    <button
-                      disabled={sentRequests.includes(m._id)}
-                      onClick={async () => {
-                        await api.post("/requests", { fromUser: user._id, toUser: m._id });
-                        setSentRequests([...sentRequests, m._id]);
-                      }}
-                      style={sentRequests.includes(m._id) ? sentButtonStyle : actionButtonStyle}
-                    >
-                      {sentRequests.includes(m._id) ? <MdCheckCircle /> : <><span style={{marginRight: '4px'}}>Connect</span> <MdChevronRight /></>}
-                    </button>
+                    {conversationsByUser[m._id] ? (
+                      <a href={`/chat/${conversationsByUser[m._id]}`} style={{ textDecoration: "none" }}>
+                        <button style={chatButton}><FaCommentDots style={{ marginRight: 8 }} />Chat</button>
+                      </a>
+                    ) : (
+                      <button
+                        disabled={sentRequests.includes(m._id)}
+                        onClick={async () => {
+                          await api.post("/requests", { fromUser: user._id, toUser: m._id });
+                          setSentRequests([...sentRequests, m._id]);
+                        }}
+                        style={sentRequests.includes(m._id) ? sentButtonStyle : actionButtonStyle}
+                      >
+                        {sentRequests.includes(m._id) ? <MdCheckCircle /> : <><span style={{marginRight: '4px'}}>Connect</span> <MdChevronRight /></>}
+                      </button>
+                    )}
                   </div>
                 </motion.div>
               ))}
@@ -196,24 +233,93 @@ console.log("USER FROM LOCALSTORAGE:", user);
 const containerStyle = {
   minHeight: "100vh",
   padding: "80px 40px",
-  backgroundColor: "#020617",
-  backgroundImage: "radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.3) 0, transparent 50%), radial-gradient(at 100% 100%, rgba(76, 29, 149, 0.2) 0, transparent 50%)",
-  color: "#f8fafc",
+  backgroundColor: "#0b0d0f",
+  backgroundImage: "radial-gradient(at 0% 0%, rgba(255,255,255,0.02) 0, transparent 30%)",
+  color: "#eef2f6",
   fontFamily: "'Inter', system-ui, sans-serif"
+};
+
+const topGradient = {
+  position: "fixed",
+  left: 0,
+  right: 0,
+  height: 200,
+  background: "linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
+  filter: "blur(40px)",
+  pointerEvents: "none",
+  zIndex: 0,
+};
+
+const headerCard = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  background: "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01))",
+  padding: "14px 20px",
+  borderRadius: 14,
+  marginBottom: 22,
+  border: "1px solid rgba(255,255,255,0.04)",
+};
+
+const profilePill = {
+  width: 48,
+  height: 48,
+  borderRadius: 12,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "linear-gradient(135deg,#157a43,#34d399)",
+  color: "#061117",
+  fontWeight: 800,
+};
+
+const primaryAction = {
+  display: "none",
+};
+
+const avatarCircle = {
+  width: 50,
+  height: 50,
+  borderRadius: 12,
+  background: "#1f2933",
+  color: "#e6edf3",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 800,
+};
+
+const cardHeaderAlt = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 8,
+};
+
+const chatButton = {
+  padding: "8px 14px",
+  background: "linear-gradient(90deg,#86efac,#34d399)",
+  color: "#042014",
+  border: "none",
+  borderRadius: 10,
+  fontWeight: 700,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
 };
 
 const statusBadge = {
   display: "inline-flex",
   alignItems: "center",
   gap: "8px",
-  background: "rgba(255,255,255,0.03)",
+  background: "rgba(34,197,94,0.06)",
   padding: "6px 12px",
   borderRadius: "20px",
   fontSize: "10px",
   fontWeight: "800",
   letterSpacing: "1px",
-  color: "#94a3b8",
-  border: "1px solid rgba(255,255,255,0.05)",
+  color: "#065f46",
+  border: "1px solid rgba(34,197,94,0.12)",
   marginBottom: "16px"
 };
 
@@ -222,7 +328,7 @@ const pulseDot = {
   width: "6px",
   backgroundColor: "#10b981",
   borderRadius: "50%",
-  boxShadow: "0 0 8px #10b981"
+  boxShadow: "0 0 8px rgba(16,185,129,0.9)"
 };
 
 const titleStyle = {
@@ -233,7 +339,7 @@ const titleStyle = {
 };
 
 const subtitleStyle = {
-  color: "#64748b",
+  color: "#9ae6b4",
   fontSize: "1.1rem",
   maxWidth: "500px"
 };
@@ -266,7 +372,7 @@ const nameStyle = { fontSize: "1.25rem", fontWeight: "700", color: "#fff" };
 
 const matchScore = {
   fontSize: "12px",
-  color: "#fbbf24",
+  color: "#86efac",
   fontWeight: "600",
   marginTop: "4px",
   display: "flex",
@@ -275,7 +381,7 @@ const matchScore = {
 };
 
 const skillBox = {
-  background: "rgba(0,0,0,0.2)",
+  background: "rgba(34,197,94,0.02)",
   padding: "16px",
   borderRadius: "12px",
   marginBottom: "24px"
@@ -284,21 +390,21 @@ const skillBox = {
 const skillContainerStyle = { display: "flex", flexWrap: "wrap", gap: "6px" };
 
 const pillStyle = {
-  background: "rgba(99, 102, 241, 0.1)",
-  border: "1px solid rgba(99, 102, 241, 0.2)",
+  background: "rgba(34,197,94,0.04)",
+  border: "1px solid rgba(34,197,94,0.06)",
   padding: "4px 10px",
   borderRadius: "6px",
   fontSize: "11px",
   fontWeight: "600",
-  color: "#a5b4fc"
+  color: "#cbd5e1"
 };
 
 const footerStyle = { display: "flex", justifyContent: "space-between", alignItems: "center" };
 
 const actionButtonStyle = {
   padding: "8px 18px",
-  background: "#fff",
-  color: "#000",
+  background: "#e6edf3",
+  color: "#0b1220",
   border: "none",
   borderRadius: "10px",
   fontWeight: "700",
@@ -306,14 +412,14 @@ const actionButtonStyle = {
   cursor: "pointer",
   display: "flex",
   alignItems: "center",
-  transition: "0.2s"
+  transition: "0.12s",
 };
 
 const sentButtonStyle = {
   padding: "8px 18px",
-  background: "rgba(34, 197, 94, 0.1)",
-  color: "#4ade80",
-  border: "1px solid rgba(34, 197, 94, 0.2)",
+  background: "rgba(34,197,94,0.08)",
+  color: "#065f46",
+  border: "1px solid rgba(34,197,94,0.12)",
   borderRadius: "10px",
   fontSize: "16px",
   cursor: "default"
@@ -333,7 +439,7 @@ const glowEffectStyle = {
   left: 0,
   right: 0,
   height: "300px",
-  background: "radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15), transparent 70%)",
+  background: "radial-gradient(circle at 50% -20%, rgba(16,185,129,0.08), transparent 70%)",
   pointerEvents: "none"
 };
 
