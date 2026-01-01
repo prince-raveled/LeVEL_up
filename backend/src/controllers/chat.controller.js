@@ -97,9 +97,31 @@ const markMessagesSeen = async (req, res) => {
   }
 };
 
+// @desc    Get conversation details
+// @route   GET /api/chat/conversation/:conversationId
+const getConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId)
+      .populate("participants", "name")
+      .populate("request");
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    res.json(conversation);
+  } catch (error) {
+    console.error("Get conversation error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getConversations,
   getMessages,
   sendMessage,
   markMessagesSeen,
+  getConversation,
 };

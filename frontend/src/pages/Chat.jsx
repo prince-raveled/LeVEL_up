@@ -9,6 +9,7 @@ function Chat() {
   const { conversationId } = useParams();
   const user = JSON.parse(localStorage.getItem("user"));
   const [messages, setMessages] = useState([]);
+  const [conversation, setConversation] = useState(null);
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
   const socketRef = useRef(null);
@@ -20,11 +21,17 @@ function Chat() {
 
     socket.emit("joinConversation", conversationId);
 
+    const fetchConversation = async () => {
+      const res = await api.get(`/chat/conversation/${conversationId}`);
+      setConversation(res.data);
+    };
+
     const fetchMessages = async () => {
       const res = await api.get(`/chat/messages/${conversationId}`);
       setMessages(res.data);
     };
 
+    fetchConversation();
     fetchMessages();
 
     socket.on("receiveMessage", (message) => {
@@ -86,7 +93,7 @@ function Chat() {
     markSeen();
   }, [conversationId, user?._id]);
 
-  const otherName = messages.find((m) => m.sender._id !== user._id)?.sender?.name || "Chat";
+  const otherName = conversation?.participants?.find((p) => p._id !== user._id)?.name || "Chat";
 
   return (
     <div style={chatPage}>

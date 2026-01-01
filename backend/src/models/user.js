@@ -16,6 +16,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Availability cluster (hackathon, project, research, quiz)
+    availability: {
+      type: String,
+      required: true,
+      enum: ['hackathon', 'project', 'research', 'quiz'],
+    },
+
     // Skills the user already has
     skills: {
       type: [String],
@@ -45,4 +52,9 @@ const userSchema = new mongoose.Schema(
 
 module.exports =
   mongoose.models.User || mongoose.model("User", userSchema);
+
+// Add indexes for performance
+userSchema.index({ availability: 1 });
+userSchema.index({ skills: 1 });
+userSchema.index({ availability: 1, skills: 1 });
 

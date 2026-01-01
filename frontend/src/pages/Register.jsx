@@ -127,7 +127,7 @@ if (!github || !linkedin) {
   email,
   availability, // ✅ ADD THIS LINE
   skills,
-  lookingFor: lookingFor.split(",").map((s) => s.trim()),
+  lookingFor: lookingFor.split(",").map((s) => s.trim().toLowerCase()),
   portfolio: {
     github,
     linkedin,

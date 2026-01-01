@@ -5,10 +5,10 @@ const User = require("../models/user");
 // @access  Public
 const registerUser = async (req, res) => {
   try {
-    const { name, email, skills, lookingFor, portfolio } = req.body;
+    const { name, email, availability, skills, lookingFor, portfolio } = req.body;
 
     // Basic validation
-    if (!name || !email || !skills || !lookingFor) {
+    if (!name || !email || !availability || !skills || !lookingFor) {
       return res.status(400).json({
         message: "Please provide all required fields",
       });
@@ -26,6 +26,7 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       name,
       email,
+      availability,
       skills,
       lookingFor,
       portfolio,

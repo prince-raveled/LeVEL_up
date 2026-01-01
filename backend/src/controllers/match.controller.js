@@ -15,6 +15,11 @@ const getMatches = async (req, res) => {
       });
     }
 
+    // If user doesn't have availability set, return no matches (for old users)
+    if (!currentUser.availability) {
+      return res.json([]);
+    }
+
     // Prepare lookingFor array (robust to string/empty values)
     const lookingFor = Array.isArray(currentUser.lookingFor)
       ? currentUser.lookingFor.filter(Boolean)
@@ -22,12 +27,13 @@ const getMatches = async (req, res) => {
       ? [currentUser.lookingFor]
       : [];
 
-    // Build query (previous behavior): match others; if lookingFor set, require skills match.
-    const baseQuery = { _id: { $ne: userId } };
-
-    if (lookingFor.length) {
-      baseQuery.skills = { $in: lookingFor };
-    }
+    // Build query: match others in the same availability cluster with mutual skill interests
+    const baseQuery = { 
+      _id: { $ne: userId },
+      availability: currentUser.availability, // Same cluster
+      skills: { $in: lookingFor }, // Other user has skills current user is looking for
+      lookingFor: { $in: currentUser.skills } // Other user is looking for skills current user has
+    };
 
     const matches = await User.find(baseQuery).select("-__v");
 
